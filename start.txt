@@ -1,0 +1,415 @@
+WebChatQQ 使用说明书
+📖 目录
+项目简介
+
+环境要求
+
+安装步骤
+
+快速开始
+
+功能详解
+
+高级功能
+
+故障排除
+
+常见问题
+
+注意事项
+
+🌟 项目简介
+WebChatQQ 是一个基于网页的QQ群聊客户端，通过 go-cqhttp 实现QQ协议连接，提供轻量级、跨平台的QQ群聊体验。
+
+主要特性
+✅ 实时消息收发
+
+✅ 群成员管理
+
+✅ 图片消息支持
+
+✅ 戳一戳功能
+
+✅ 消息撤回
+
+✅ 群文件管理
+
+✅ 响应式设计
+
+✅ 单文件部署
+
+🛠️ 环境要求
+最低配置
+操作系统: Android Termux (Ubuntu 环境) / Linux / Windows / macOS
+
+内存: 至少 512MB RAM
+
+存储: 至少 100MB 可用空间
+
+软件依赖
+Termux (Android 用户)
+
+Python 3.6+ (用于运行HTTP服务器)
+
+Java 运行环境 (用于运行 go-cqhttp)
+
+📦 安装步骤
+第一步：安装基础环境
+Android Termux 用户：
+bash
+# 更新包管理器
+pkg update && pkg upgrade
+
+# 安装必要软件
+pkg install python wget proot -y
+
+# 安装Ubuntu环境
+wget https://raw.githubusercontent.com/Neo-Oli/termux-ubuntu/master/ubuntu.sh
+chmod +x ubuntu.sh
+./ubuntu.sh
+
+# 进入Ubuntu环境
+./start-ubuntu.sh
+其他系统用户：
+确保已安装 Python 3.x：
+
+bash
+python3 --version
+第二步：下载项目文件
+bash
+# 克隆项目或下载ZIP包
+git clone https://github.com/yourusername/webchatqq.git
+cd webchatqq
+
+# 或手动创建目录结构
+mkdir -p webchatqq/{backend,frontend,scripts,docs}
+第三步：配置 go-cqhttp
+下载 go-cqhttp：
+
+bash
+cd backend
+# 选择适合您平台的版本下载
+wget https://github.com/Mrs4s/go-cqhttp/releases/download/v1.0.0/go-cqhttp_linux_amd64.tar.gz
+tar -zxvf go-cqhttp_linux_amd64.tar.gz
+chmod +x go-cqhttp
+首次运行生成配置文件：
+
+bash
+./go-cqhttp
+# 选择 3 (HTTP通信) 和 0 (正向WebSocket)
+修改配置文件 config.yml：
+
+yaml
+servers:
+  - http:
+      host: 0.0.0.0
+      port: 16099  # HTTP API端口
+  - ws:
+      host: 0.0.0.0
+      port: 18088  # WebSocket端口
+🚀 快速开始
+启动服务
+启动 go-cqhttp：
+
+bash
+cd backend
+./go-cqhttp
+首次运行会生成设备文件
+
+使用手机QQ扫码登录
+
+启动HTTP服务器：
+
+bash
+cd scripts
+chmod +x start_server.sh
+./start_server.sh
+访问客户端：
+
+打开浏览器访问：http://localhost:8000
+
+或使用局域网IP：http://[你的IP地址]:8000
+
+首次使用流程
+登录界面：
+
+text
++---------------------------+
+|        加入群聊           |
+| +-----------------------+ |
+| | 你的昵称: [输入框]     | |
+| +-----------------------+ |
+| | QQ群号:  [输入框]      | |
+| +-----------------------+ |
+| | 密码(可选): [输入框]   | |
+| +-----------------------+ |
+|                           |
+|     [加入群聊按钮]        |
++---------------------------+
+填写信息：
+
+昵称：显示在群中的名称
+
+QQ群号：要加入的QQ群号码
+
+密码：如果群设置了密码（可选）
+
+开始聊天：
+
+成功连接后进入聊天界面
+
+在底部输入框输入消息
+
+按回车或点击发送按钮发送
+
+📱 功能详解
+1. 基础聊天功能
+发送消息
+在输入框输入文本内容
+
+按 Enter 键或点击"发送"按钮
+
+支持文本换行（Shift+Enter）
+
+接收消息
+新消息自动显示在聊天区域
+
+显示发送者昵称和头像
+
+显示消息时间戳
+
+消息格式
+text
+[时间] 发送者: 消息内容
+示例: 14:30 张三: 大家好！
+2. 成员管理
+查看成员列表
+点击右侧"成员列表"按钮
+
+显示所有群成员昵称
+
+显示成员QQ头衔（如果有）
+
+成员状态
+在线成员正常显示
+
+离线成员灰色显示
+
+3. 图片功能
+发送图片
+点击输入框旁的"📷"图标
+
+选择要发送的图片文件
+
+等待上传完成
+
+图片自动发送到群聊
+
+查看图片
+点击聊天中的图片可放大查看
+
+支持缩放和下载
+
+4. 戳一戳功能
+戳其他成员
+打开右侧成员列表
+
+找到要戳的用户
+
+点击用户旁的"👆"按钮
+
+系统发送戳一戳消息
+
+5. 消息管理
+撤回消息
+找到自己发送的消息
+
+点击消息旁的"撤回"按钮
+
+确认撤回操作
+
+注意：只能撤回自己发送的消息，且有时间限制
+
+6. 文件管理
+查看群文件
+点击输入框旁的"📁"图标
+
+查看群文件列表
+
+显示文件名和大小
+
+下载文件
+在文件列表中找到要下载的文件
+
+点击"下载"按钮
+
+文件自动下载到本地
+
+🎯 高级功能
+自定义设置
+修改连接设置
+点击右上角"⚙️"设置按钮
+
+修改WebSocket URL和API URL
+
+点击保存
+
+常用设置选项
+WebSocket URL: ws://localhost:18088
+
+API URL: http://localhost:16099
+
+自动重连: 启用/禁用
+
+声音通知: 启用/禁用
+
+多群支持
+切换群聊
+返回登录界面
+
+输入新的群号
+
+重新连接
+
+同时使用多个群
+在不同浏览器标签页打开
+
+使用不同昵称加入不同群
+
+键盘快捷键
+快捷键	功能
+Enter	发送消息
+Shift+Enter	换行
+Ctrl+/	显示快捷键帮助
+Esc	关闭当前窗口
+🔧 故障排除
+常见问题解决
+1. 无法连接WebSocket
+bash
+# 检查端口是否开放
+netstat -tlnp | grep 18088
+
+# 检查防火墙设置
+sudo ufw allow 18088
+sudo ufw allow 16099
+2. go-cqhttp 启动失败
+bash
+# 检查文件权限
+chmod +x go-cqhttp
+
+# 检查依赖
+ldd go-cqhttp
+3. 图片上传失败
+检查网络连接
+
+检查文件大小限制
+
+检查存储权限
+
+日志查看
+go-cqhttp 日志
+bash
+# 查看实时日志
+tail -f logs/最新日志文件.log
+
+# 查看错误日志
+grep -i error logs/*.log
+客户端日志
+浏览器按 F12 打开开发者工具
+
+查看 Console 标签页的错误信息
+
+❓ 常见问题
+Q1: 为什么扫码登录失败？
+A: 确保：
+
+手机和服务器时间同步
+
+网络连接正常
+
+没有启用设备锁
+
+Q2: 如何修改监听端口？
+A: 编辑 backend/config.yml：
+
+yaml
+servers:
+  - http:
+      port: 16099  # 修改为想要的端口
+  - ws:
+      port: 18088  # 修改为想要的端口
+Q3: 支持私聊吗？
+A: 当前版本主要专注于群聊功能，私聊功能正在开发中。
+
+Q4: 消息记录能保存多久？
+A: 当前版本消息仅保存在内存中，刷新页面后会清空。持久化存储功能正在开发中。
+
+Q5: 如何备份配置？
+A: 备份以下文件：
+
+backend/config.yml
+
+backend/device.json
+
+backend/session.token
+
+⚠️ 注意事项
+安全提示
+不要泄露 session.token：此文件包含登录凭证
+
+使用强密码：如果设置群密码，请使用强密码
+
+定期更新：保持 go-cqhttp 更新到最新版本
+
+使用规范
+遵守群规：尊重各个QQ群的规则
+
+合理使用：不要频繁发送消息或使用自动化功能
+
+尊重隐私：不要泄露他人隐私信息
+
+性能优化
+清理缓存：定期清理浏览器缓存
+
+关闭不需要的标签页：减少内存占用
+
+使用最新浏览器：获得最佳性能
+
+法律声明
+本项目仅供学习和交流使用
+
+请遵守当地法律法规和QQ平台使用协议
+
+开发者不对滥用行为负责
+
+📞 技术支持
+获取帮助
+查看文档：首先阅读本说明书
+
+检查日志：查看错误信息
+
+社区支持：访问项目Git页面提交Issue
+
+更新检查
+bash
+# 检查项目更新
+cd webchatqq
+git pull origin main
+
+# 检查go-cqhttp更新
+cd backend
+wget https://github.com/Mrs4s/go-cqhttp/releases/latest
+反馈建议
+欢迎通过以下方式反馈：
+
+GitHub Issues
+
+项目讨论区
+
+邮件联系
+
+最后更新: 2024年1月
+版本: WebChatQQ v1.1.0
+
+祝您使用愉快！如有任何问题，请随时联系技术支持。
+

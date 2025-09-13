@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebChatQQ</title>
+    <!-- 引入Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Pico CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
+    <style>
+        :root {
+            --primary-color: #00aaff;
+            --primary-light: #80d4ff;
+            --primary-dark: #0088cc;
+            --secondary-color: #f0f0f0;
+            --text-color: #333333;
+            --text-light: #777777;
+            --border-color: #dddddd;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 登录界面样式 */
+        #login {
+            max-width: 400px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #login h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        #join-button {
+            width: 100%;
+            background-color: var(--primary-color);
+            border: none;
+            margin-top: 1rem;
+        }
+
+        #join-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* 聊天界面样式 */
+        #chat {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: white;
+        }
+
+        #chat-header {
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #chat-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        #member-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #member-list li {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        #member-list li .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            margin-right: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        #chat-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+        }
+
+        .message .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        .message .content {
+            flex: 1;
+        }
+
+        .message .sender {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .message .sender .badge {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+        }
+
+        .message .text {
+            background-color: var(--secondary-color);
+            padding: 0.75rem;
+            border-radius: 8px;
+            display: inline-block;
+            max-width: 70%;
+        }
+
+        .message.self {
+            flex-direction: row-reverse;
+        }
+
+        .message.self .avatar {
+            margin-right: 0;
+            margin-left: 0.75rem;
+        }
+
+        .message.self .sender {
+            text-align: right;
+        }
+
+        .message.self .text {
+            background-color: var(--primary-light);
+            text-align: right;
+        }
+
+        .system-message {
+            text-align: center;
+            color: var(--text-light);
+            font-style: italic;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        #input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+
+        #message-input {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        #status-bar {
+            padding: 0.5rem 1rem;
+            background-color: var(--secondary-color);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success-color);
+        }
+
+        .status-dot.connecting {
+            background-color: var(--warning-color);
+        }
+
+        .status-dot.disconnected {
+            background-color: var(--danger-color);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            #sidebar {
+                display: none;
+            }
+            
+            #login {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+
+        /* 工具类 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 模态框样式 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+}
+
+.modal button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* 消息图片样式 */
+.message-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.message-image:hover {
+    transform: scale(1.02);
+}
+
+/* 设置模态框样式 */
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.setting-group input[type="text"] {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.setting-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* 设置按钮样式 */
+#settings-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+#settings-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* 表情样式 */
+.face {
+    display: inline-block;
+    background-color: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+/* 成员列表样式 */
+.member-info {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 500;
+}
+
+.member-title {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    #sidebar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        z-index: 100;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    #sidebar:not(.hidden) {
+        transform: translateX(0);
+    }
+    
+    .message .text {
+        max-width: 85% !important;
+    }
+    
+    .message-image {
+        max-width: 200px;
+        max-height: 200px;
+    }
+}
+
+/* 动画效果 */
+.message {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-dot {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.status-dot.connected {
+    animation: none;
+    opacity: 1;
+}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录界面 -->
+        <div id="login">
+            <h2>加入群聊</h2>
+            <div class="input-group">
+                <label for="nickname">你的昵称</label>
+                <input type="text" id="nickname" placeholder="输入你的昵称" autocomplete="nickname">
+            </div>
+            <div class="input-group">
+                <label for="group-id">QQ群号</label>
+                <input type="text" id="group-id" placeholder="输入QQ群号">
+            </div>
+            <div class="input-group">
+                <label for="password">密码（可选）</label>
+                <input type="password" id="password" placeholder="输入密码（如果需要）">
+            </div>
+            <button id="join-button" class="primary">加入群聊</button>
+        </div>
+
+        <!-- 聊天界面 -->
+        <div id="chat" class="hidden">
+            <header id="chat-header">
+                <h3>群聊名称</h3>
+                <button id="sidebar-toggle" class="secondary outline">成员列表</button>
+            </header>
+            
+            <div id="chat-main">
+                <aside id="sidebar">
+                    <h4>群成员</h4>
+                    <ul id="member-list">
+                        <!-- 成员列表将由JavaScript动态生成 -->
+                    </ul>
+                </aside>
+                
+                <div id="chat-content">
+                    <div id="messages">
+                        <!-- 消息将由JavaScript动态生成 -->
+                    </div>
+                    
+                    <div id="input-area">
+                        <input type="text" id="message-input" placeholder="输入消息...">
+                        <button id="send-button">发送</button>
+                    </div>
+                </div>
+            </div>
+            
+            <footer id="status-bar">
+                <div class="connection-status">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">未连接</span>
+                </div>
+                <div id="online-count">在线: 0</div>
+            </footer>
+        </div>
+    </div>
+
+        <script>
+// Vue 3 应用实例
+const { createApp, ref, reactive, onMounted, onUnmounted } = Vue;
+
+// 工具函数
+const utils = {
+    // 生成随机ID
+    generateId: () => Math.random().toString(36).substring(2, 15),
+    
+    // 格式化时间
+    formatTime: (timestamp) => {
+        const date = new Date(timestamp);
+        return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    },
+    
+    // 获取名称首字母（用于头像）
+    getInitials: (name) => {
+        if (!name) return '?';
+        const parts = name.split(' ');
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    },
+    
+    // 解析CQ码
+    parseCQCode: (message) => {
+        if (typeof message !== 'string') return [{ type: 'text', data: { text: String(message) } }];
+        
+        const result = [];
+        let textBuffer = '';
+        let i = 0;
+        
+        while (i < message.length) {
+            if (message.substring(i, i + 4) === '[CQ:') {
+                // 处理文本缓冲区
+                if (textBuffer) {
+                    result.push({ type: 'text', data: { text: textBuffer } });
+                    textBuffer = '';
+                }
+                
+                // 找到CQ码结束位置
+                const endIndex = message.indexOf(']', i);
+                if (endIndex === -1) {
+                    textBuffer += message.substring(i);
+                    break;
+                }
+                
+                // 解析CQ码
+                const cqCode = message.substring(i + 4, endIndex);
+                const sepIndex = cqCode.indexOf(',');
+                const cqType = sepIndex === -1 ? cqCode : cqCode.substring(0, sepIndex);
+                
+                const cqData = {};
+                if (sepIndex !== -1) {
+                    const params = cqCode.substring(sepIndex + 1).split(',');
+                    params.forEach(param => {
+                        const eqIndex = param.indexOf('=');
+                        if (eqIndex !== -1) {
+                            const key = param.substring(0, eqIndex);
+                            const value = param.substring(eqIndex + 1);
+                            cqData[key] = value;
+                        }
+                    });
+                }
+                
+                result.push({ type: cqType, data: cqData });
+                i = endIndex + 1;
+            } else {
+                textBuffer += message[i];
+                i++;
+            }
+        }
+        
+        // 处理剩余的文本
+        if (textBuffer) {
+            result.push({ type: 'text', data: { text: textBuffer } });
+        }
+        
+        return result;
+    },
+    
+    // 构建CQ码
+    buildCQCode: (type, data) => {
+        let code = `[CQ:${type}`;
+        for (const key in data) {
+            if (data[key]) {
+                code += `,${key}=${data[key]}`;
+            }
+        }
+        code += ']';
+        return code;
+    },
+    uploadImage: async (file, apiUrl) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const response = await fetch(`${apiUrl}/upload_file`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (result.status === 'ok') {
+                return result.data.file;
+            } else {
+                throw new Error(result.msg || '上传失败');
+            }
+        } catch (error) {
+            console.error('图片上传失败:', error);
+            throw error;
+        }
+    },
+    
+    // 检查是否是图片文件
+    isImageFile: (file) => {
+        return file.type.startsWith('image/');
+    }
+};
+
+// 在 Vue setup 函数中添加图片上传相关代码
+
+// 撤回消息
+const recallMessage = async (messageId) => {
+    try {
+        const response = await fetch(`${state.config.apiUrl}/delete_msg`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message_id: parseInt(messageId)
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            addSystemMessage('消息已撤回');
+            
+            // 从消息列表中移除被撤回的消息
+            state.messages = state.messages.filter(msg => msg.id !== messageId);
+            updateMessagesDisplay();
+        } else {
+            console.error('撤回消息失败:', result);
+            addSystemMessage('撤回消息失败: ' + (result.msg || '未知错误'));
+        }
+    } catch (error) {
+        console.error('撤回消息时出错:', error);
+        addSystemMessage('撤回消息时出错: ' + error.message);
+    }
+};
+
+// 在渲染消息时添加撤回按钮（仅对自己的消息）
+const renderMessage = (message) => {
+    // ... 已有的渲染代码
+    
+    // 如果是自己的消息，添加撤回按钮
+    if (message.sender && message.sender.user_id === state.currentUser.id) {
+        const recallBtn = document.createElement('button');
+        recallBtn.className = 'recall-btn';
+        recallBtn.innerHTML = '撤回';
+        recallBtn.title = '撤回消息';
+        recallBtn.addEventListener('click', () => {
+            if (confirm('确定要撤回这条消息吗？')) {
+                recallMessage(message.id);
+            }
+        });
+        
+        // 将撤回按钮添加到消息元素中
+        const contentDiv = messageEl.querySelector('.content');
+        contentDiv.appendChild(recallBtn);
+    }
+    
+    return messageEl;
+};
+
+// 配置管理
+const showSettings = () => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            width: 400px;
+        ">
+            <h3>设置</h3>
+            <div class="setting-group">
+                <label for="ws-url">WebSocket URL:</label>
+                <input type="text" id="ws-url" value="${state.config.wsUrl}" style="width: 100%;">
+            </div>
+            <div class="setting-group">
+                <label for="api-url">API URL:</label>
+                <input type="text" id="api-url" value="${state.config.apiUrl}" style="width: 100%;">
+            </div>
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="auto-reconnect" checked> 自动重连
+                </label>
+            </div>
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="sound-notification" checked> 声音通知
+                </label>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+                <button id="save-settings">保存</button>
+                <button id="close-settings" class="secondary">取消</button>
+            </div>
+        </div>
+    `;
+    
+    // 添加关闭功能
+    const closeBtn = modal.querySelector('#close-settings');
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    // 添加保存功能
+    const saveBtn = modal.querySelector('#save-settings');
+    saveBtn.addEventListener('click', () => {
+        const wsUrl = document.getElementById('ws-url').value;
+        const apiUrl = document.getElementById('api-url').value;
+        const autoReconnect = document.getElementById('auto-reconnect').checked;
+        const soundNotification = document.getElementById('sound-notification').checked;
+        
+        // 保存设置
+        state.config.wsUrl = wsUrl;
+        state.config.apiUrl = apiUrl;
+        
+        try {
+            localStorage.setItem('webchatqq_config', JSON.stringify({
+                wsUrl, apiUrl, autoReconnect, soundNotification
+            }));
+        } catch (e) {
+            console.error('保存设置失败:', e);
+        }
+        
+        addSystemMessage('设置已保存');
+        document.body.removeChild(modal);
+        
+        // 重新连接
+        if (state.isConnected) {
+            connect();
+        }
+    });
+    
+    document.body.appendChild(modal);
+};
+
+// 在初始化时加载设置
+const loadFromLocalStorage = () => {
+    try {
+        const savedUser = localStorage.getItem('webchatqq_user');
+        const savedGroup = localStorage.getItem('webchatqq_group');
+        const savedConfig = localStorage.getItem('webchatqq_config');
+        
+        if (savedUser) {
+            state.currentUser = { ...state.currentUser, ...JSON.parse(savedUser) };
+            elements.nickname.value = state.currentUser.nickname;
+        }
+        
+        if (savedGroup) {
+            state.currentGroup = { ...state.currentGroup, ...JSON.parse(savedGroup) };
+            elements['group-id'].value = state.currentGroup.id;
+        }
+        
+        if (savedConfig) {
+            const config = JSON.parse(savedConfig);
+            state.config = { ...state.config, ...config };
+        }
+    } catch (e) {
+        console.error('加载本地存储失败:', e);
+    }
+};
+
+// 戳一戳功能
+const sendPoke = async (targetId) => {
+    try {
+        const response = await fetch(`${state.config.apiUrl}/send_msg`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message_type: 'group',
+                group_id: parseInt(state.currentGroup.id),
+                message: `[CQ:poke,qq=${targetId}]`
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'ok') {
+            addSystemMessage(`戳了戳 ${targetId}`);
+        } else {
+            console.error('戳一戳失败:', result);
+            addSystemMessage('戳一戳失败: ' + (result.msg || '未知错误'));
+        }
+    } catch (error) {
+        console.error('发送戳一戳时出错:', error);
+        addSystemMessage('发送戳一戳时出错: ' + error.message);
+    }
+};
+
+// 在成员列表项中添加戳一戳功能
+const updateMemberList = (members) => {
+    state.currentGroup.members = members;
+    elements.memberList.innerHTML = '';
+    
+    members.forEach(member => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <div class="avatar">${utils.getInitials(member.nickname)}</div>
+            <div class="member-info">
+                <div class="member-name">${escapeHtml(member.nickname)}</div>
+                ${member.title ? `<div class="member-title">${escapeHtml(member.title)}</div>` : ''}
+            </div>
+            <button class="poke-btn" title="戳一戳">👆</button>
+        `;
+        
+        // 添加戳一戳事件
+        const pokeBtn = li.querySelector('.poke-btn');
+        pokeBtn.addEventListener('click', () => {
+            sendPoke(member.user_id);
+        });
+        
+        elements.memberList.appendChild(li);
+    });
+    
+    elements.onlineCount.textContent = `在线: ${members.length}`;
+};
+
+const setupEventListeners = () => {
+    // ... 已有的监听器
+    
+    // 图片上传按钮
+    const imageUploadBtn = document.createElement('button');
+    imageUploadBtn.id = 'image-upload-btn';
+    imageUploadBtn.innerHTML = '📷';
+    imageUploadBtn.title = '上传图片';
+    imageUploadBtn.style.marginRight = '0.5rem';
+    imageUploadBtn.addEventListener('click', triggerImageUpload);
+    
+    elements.inputArea.insertBefore(imageUploadBtn, elements.messageInput);
+    
+    // 隐藏的文件输入框
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.id = 'file-input';
+    fileInput.style.display = 'none';
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    document.body.appendChild(fileInput);
+
+    // 设置按钮
+    const settingsBtn = document.createElement('button');
+    settingsBtn.id = 'settings-btn';
+    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.title = '设置';
+    settingsBtn.style.marginLeft = 'auto';
+    settingsBtn.addEventListener('click', showSettings);
+    
+    elements.chatHeader.appendChild(settingsBtn);
+};
+
+// 触发文件选择
+const triggerImageUpload = () => {
+    document.getElementById('file-input').click();
+};
+
+// 处理文件选择
+const handleFileSelect = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // 重置文件输入框
+    event.target.value = '';
+    
+    if (!utils.isImageFile(file)) {
+        addSystemMessage('请选择图片文件');
+        return;
+    }
+    
+    // 显示上传状态
+    addSystemMessage('正在上传图片...');
+    
+    try {
+        // 上传图片
+        const fileName = await utils.uploadImage(file, state.config.apiUrl);
+        
+        // 发送图片消息
+        const cqCode = utils.buildCQCode('image', { file: fileName });
+        
+        const response = await fetch(`${state.config.apiUrl}/send_msg`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message_type: 'group',
+                group_id: parseInt(state.currentGroup.id),
+                message: cqCode
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status !== 'ok') {
+            throw new Error(result.msg || '发送失败');
+        }
+        
+        addSystemMessage('图片发送成功');
+    } catch (error) {
+        console.error('图片上传或发送失败:', error);
+        addSystemMessage('图片上传或发送失败: ' + error.message);
+    }
+};
+
+// 主应用
+const app = createApp({
+    setup() {
+        // 状态管理
+        const state = reactive({
+            // 连接状态
+            isConnected: false,
+            isConnecting: false,
+            connectionError: null,
+            
+            // 用户信息
+            currentUser: {
+                id: null,
+                nickname: '',
+                avatar: null
+            },
+            
+            // 群组信息
+            currentGroup: {
+                id: null,
+                name: '未知群组',
+                members: []
+            },
+            
+            // 消息列表
+            messages: [],
+            
+            // 输入框内容
+            inputMessage: '',
+            
+            // WebSocket 连接
+            ws: null,
+            
+            // 配置
+            config: {
+                wsUrl: 'ws://localhost:18088',
+                apiUrl: 'http://localhost:16099'
+            }
+        });
+        
+        // 引用DOM元素
+        const elements = {
+            login: document.getElementById('login'),
+            chat: document.getElementById('chat'),
+            messages: document.getElementById('messages'),
+            memberList: document.getElementById('member-list'),
+            messageInput: document.getElementById('message-input'),
+            sendButton: document.getElementById('send-button'),
+            joinButton: document.getElementById('join-button'),
+            statusDot: document.getElementById('status-dot'),
+            statusText: document.getElementById('status-text'),
+            onlineCount: document.getElementById('online-count'),
+            sidebarToggle: document.getElementById('sidebar-toggle')
+        };
+        
+        // 初始化
+        onMounted(() => {
+            // 加载本地存储的设置
+            loadFromLocalStorage();
+            
+            // 设置事件监听器
+            setupEventListeners();
+            
+            // 尝试自动连接（如果有保存的群组信息）
+            if (state.currentGroup.id) {
+                setTimeout(connect, 1000);
+            }
+        });
+        
+        // 清理
+        onUnmounted(() => {
+            if (state.ws) {
+                state.ws.close();
+            }
+        });
+        
+        // 从本地存储加载数据
+        const loadFromLocalStorage = () => {
+            try {
+                const savedUser = localStorage.getItem('webchatqq_user');
+                const savedGroup = localStorage.getItem('webchatqq_group');
+                
+                if (savedUser) {
+                    state.currentUser = { ...state.currentUser, ...JSON.parse(savedUser) };
+                    elements.nickname.value = state.currentUser.nickname;
+                }
+                
+                if (savedGroup) {
+                    state.currentGroup = { ...state.currentGroup, ...JSON.parse(savedGroup) };
+                    elements['group-id'].value = state.currentGroup.id;
+                }
+            } catch (e) {
+                console.error('加载本地存储失败:', e);
+            }
+        };
+        
+        // 保存数据到本地存储
+        const saveToLocalStorage = () => {
+            try {
+                localStorage.setItem('webchatqq_user', JSON.stringify({
+                    nickname: state.currentUser.nickname
+                }));
+                
+                localStorage.setItem('webchatqq_group', JSON.stringify({
+                    id: state.currentGroup.id
+                }));
+            } catch (e) {
+                console.error('保存到本地存储失败:', e);
+            }
+        };
+        
+        // 设置事件监听器
+        const setupEventListeners = () => {
+            // 加入群组按钮
+            elements.joinButton.addEventListener('click', joinGroup);
+            
+            // 发送消息按钮和回车键
+            elements.sendButton.addEventListener('click', sendMessage);
+            elements.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 侧边栏切换
+            elements.sidebarToggle.addEventListener('click', () => {
+                elements.sidebar.classList.toggle('hidden');
+            });
+            
+            // 窗口关闭前提示
+            window.addEventListener('beforeunload', (e) => {
+                if (state.isConnected) {
+                    e.preventDefault();
+                    e.returnValue = '确定要离开吗？未发送的消息可能会丢失。';
+                }
+            });
+        };
+        
+        // 更新连接状态显示
+        const updateConnectionStatus = (status, text) => {
+            state.isConnected = status === 'connected';
+            state.isConnecting = status === 'connecting';
+            state.connectionError = status === 'error' ? text : null;
+            
+            elements.statusDot.className = 'status-dot ' + status;
+            elements.statusText.textContent = 
+                status === 'connected' ? '已连接' :
+                status === 'connecting' ? '连接中...' :
+                status === 'error' ? `错误: ${text}` : '未连接';
+        };
+        
+        // 连接到WebSocket
+        const connect = () => {
+            if (state.ws) {
+                state.ws.close();
+            }
+            
+            updateConnectionStatus('connecting');
+            
+            try {
+                state.ws = new WebSocket(state.config.wsUrl);
+                
+                state.ws.onopen = () => {
+                    console.log('WebSocket连接已建立');
+                    updateConnectionStatus('connected');
+                    
+                    // 请求群成员列表
+                    getGroupMemberList();
+                };
+                
+                state.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (e) {
+                        console.error('解析WebSocket消息失败:', e, event.data);
+                    }
+                };
+                
+                state.ws.onclose = (event) => {
+                    console.log('WebSocket连接已关闭', event.code, event.reason);
+                    updateConnectionStatus('disconnected', `连接已关闭: ${event.code} ${event.reason}`);
+                    
+                    // 尝试重新连接
+                    if (!event.wasClean) {
+                        setTimeout(() => {
+                            if (state.currentGroup.id) {
+                                console.log('尝试重新连接...');
+                                connect();
+                            }
+                        }, 3000);
+                    }
+                };
+                
+                state.ws.onerror = (error) => {
+                    console.error('WebSocket错误:', error);
+                    updateConnectionStatus('error', '连接失败');
+                };
+            } catch (e) {
+                console.error('创建WebSocket连接失败:', e);
+                updateConnectionStatus('error', e.message);
+            }
+        };
+        
+        // 处理WebSocket消息
+        const handleWebSocketMessage = (data) => {
+            // 根据OneBot协议处理不同的事件类型
+            switch (data.post_type) {
+                case 'message':
+                    handleMessageEvent(data);
+                    break;
+                    
+                case 'notice':
+                    handleNoticeEvent(data);
+                    break;
+                    
+                case 'meta_event':
+                    // 元事件，如心跳，通常可以忽略
+                    break;
+                    
+                default:
+                    console.log('未知的事件类型:', data);
+            }
+        };
+        
+        // 处理消息事件
+        const handleMessageEvent = (data) => {
+            if (data.message_type === 'group' && data.group_id == state.currentGroup.id) {
+                // 解析消息内容
+                const parsedMessage = utils.parseCQCode(data.message);
+                
+                // 创建消息对象
+                const message = {
+                    id: data.message_id || utils.generateId(),
+                    type: 'groupMsg',
+                    time: data.time * 1000, // 转换为毫秒
+                    sender: {
+                        user_id: data.user_id,
+                        nickname: data.sender.card || data.sender.nickname,
+                        role: data.sender.role,
+                        title: data.sender.title
+                    },
+                    message: parsedMessage,
+                    raw: data
+                };
+                
+                // 添加到消息列表
+                addMessage(message);
+            }
+        };
+        
+        // 处理通知事件
+        const handleNoticeEvent = (data) => {
+            switch (data.notice_type) {
+                case 'group_increase':
+                    // 新成员加入
+                    if (data.group_id == state.currentGroup.id) {
+                        addSystemMessage(`欢迎 ${data.user_id} 加入群聊`);
+                        // 更新成员列表
+                        getGroupMemberList();
+                    }
+                    break;
+                    
+                case 'group_decrease':
+                    // 成员离开
+                    if (data.group_id == state.currentGroup.id) {
+                        const operator = data.operator_id ? ` (由 ${data.operator_id} 操作)` : '';
+                        addSystemMessage(`${data.user_id} 离开了群聊${operator}`);
+                        // 更新成员列表
+                        getGroupMemberList();
+                    }
+                    break;
+                    
+                case 'group_ban':
+                    // 禁言事件
+                    if (data.group_id == state.currentGroup.id) {
+                        const duration = data.duration ? ` ${data.duration}秒` : '';
+                        const action = data.sub_type === 'ban' ? '禁言' : '解除禁言';
+                        addSystemMessage(`${data.operator_id} ${action}了 ${data.user_id}${duration}`);
+                    }
+                    break;
+                    
+                default:
+                    console.log('未知的通知类型:', data);
+            }
+        };
+        
+        // 添加消息到列表
+        const addMessage = (message) => {
+            state.messages.push(message);
+            
+            // 滚动到底部
+            setTimeout(() => {
+                elements.messages.scrollTop = elements.messages.scrollHeight;
+            }, 100);
+        };
+        
+        // 添加系统消息
+        const addSystemMessage = (text) => {
+            const message = {
+                id: utils.generateId(),
+                type: 'system',
+                time: Date.now(),
+                message: [{ type: 'text', data: { text } }]
+            };
+            
+            addMessage(message);
+        };
+        
+        // 渲染消息
+        const renderMessage = (message) => {
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${message.sender && message.sender.user_id === state.currentUser.id ? 'self' : ''}`;
+            messageEl.dataset.id = message.id;
+            
+            if (message.type === 'system') {
+                // 系统消息
+                messageEl.className = 'system-message';
+                messageEl.textContent = message.message[0].data.text;
+                return messageEl;
+            }
+            
+            // 用户消息
+            let html = `
+                <div class="avatar">${utils.getInitials(message.sender.nickname)}</div>
+                <div class="content">
+                    <div class="sender">
+                        ${escapeHtml(message.sender.nickname)}
+                        ${message.sender.title ? `<span class="badge">${escapeHtml(message.sender.title)}</span>` : ''}
+                        <span class="time">${utils.formatTime(message.time)}</span>
+                    </div>
+                    <div class="text">
+            `;
+            
+            // 渲染消息内容
+            message.message.forEach(part => {
+                if (part.type === 'text') {
+                    html += escapeHtml(part.data.text).replace(/\n/g, '<br>');
+                } else if (part.type === 'image') {
+                    html += `<img src="${part.data.url || part.data.file}" class="message-image" alt="图片" loading="lazy">`;
+                } else if (part.type === 'face') {
+                    html += `<span class="face">[表情${part.data.id}]</span>`;
+                } else {
+                    html += `[${part.type}]`;
+                }
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            messageEl.innerHTML = html;
+            
+            // 添加图片点击查看功能
+            const images = messageEl.querySelectorAll('.message-image');
+            images.forEach(img => {
+                img.addEventListener('click', () => {
+                    showImageModal(img.src);
+                });
+            });
+            
+            return messageEl;
+        };
+        
+        // 更新消息显示
+        const updateMessagesDisplay = () => {
+            // 清空现有消息
+            elements.messages.innerHTML = '';
+            
+            // 渲染所有消息
+            state.messages.forEach(message => {
+                elements.messages.appendChild(renderMessage(message));
+            });
+            
+            // 滚动到底部
+            elements.messages.scrollTop = elements.messages.scrollHeight;
+        };
+        
+        // 显示图片模态框
+        const showImageModal = (src) => {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="max-width: 90%; max-height: 90%;">
+                    <img src="${src}" style="max-width: 100%; max-height: 100%;">
+                </div>
+                <button style="
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                    background: #fff;
+                    border: none;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    font-size: 20px;
+                    cursor: pointer;
+                ">×</button>
+            `;
+            
+            // 添加关闭功能
+            const closeBtn = modal.querySelector('button');
+            closeBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+            
+            document.body.appendChild(modal);
+        };
+        
+        // 更新成员列表
+        const updateMemberList = (members) => {
+            state.currentGroup.members = members;
+            elements.memberList.innerHTML = '';
+            
+            members.forEach(member => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="avatar">${utils.getInitials(member.nickname)}</div>
+                    <div class="member-info">
+                        <div class="member-name">${escapeHtml(member.nickname)}</div>
+                        ${member.title ? `<div class="member-title">${escapeHtml(member.title)}</div>` : ''}
+                    </div>
+                `;
+                elements.memberList.appendChild(li);
+            });
+            
+            elements.onlineCount.textContent = `在线: ${members.length}`;
+        };
+        
+        // 加入群组
+        const joinGroup = () => {
+            const nickname = elements.nickname.value.trim();
+            const groupId = elements['group-id'].value.trim();
+            const password = elements.password.value.trim();
+            
+            if (!nickname) {
+                alert('请输入昵称');
+                return;
+            }
+            
+            if (!groupId) {
+                alert('请输入群号');
+                return;
+            }
+            
+            // 保存用户和群组信息
+            state.currentUser.nickname = nickname;
+            state.currentUser.id = utils.generateId();
+            state.currentGroup.id = groupId;
+            
+            saveToLocalStorage();
+            
+            // 切换到聊天界面
+            elements.login.classList.add('hidden');
+            elements.chat.classList.remove('hidden');
+            
+            // 设置群组名称（暂时使用群号，后面可以从API获取）
+            document.querySelector('#chat-header h3').textContent = `群聊 ${groupId}`;
+            
+            // 添加系统消息
+            addSystemMessage('正在连接服务器...');
+            
+            // 连接到WebSocket
+            connect();
+        };
+        
+        // 发送消息
+        const sendMessage = async () => {
+            const text = elements.messageInput.value.trim();
+            if (!text || !state.isConnected) return;
+            
+            // 清空输入框
+            elements.messageInput.value = '';
+            
+            try {
+                // 调用go-cqhttp的API发送消息
+                const response = await fetch(`${state.config.apiUrl}/send_msg`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message_type: 'group',
+                        group_id: parseInt(state.currentGroup.id),
+                        message: text
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'ok') {
+                    console.log('消息发送成功');
+                } else {
+                    console.error('消息发送失败:', result);
+                    addSystemMessage('消息发送失败: ' + (result.msg || '未知错误'));
+                }
+            } catch (error) {
+                console.error('发送消息时出错:', error);
+                addSystemMessage('发送消息时出错: ' + error.message);
+            }
+        };
+        
+        // 获取群成员列表
+        const getGroupMemberList = async () => {
+            try {
+                const response = await fetch(`${state.config.apiUrl}/get_group_member_list?group_id=${state.currentGroup.id}`);
+                const result = await response.json();
+                
+                if (result.status === 'ok') {
+                    // 处理成员数据
+                    const members = result.data.map(member => ({
+                        user_id: member.user_id,
+                        nickname: member.card || member.nickname,
+                        role: member.role,
+                        title: member.title
+                    }));
+                    
+                    updateMemberList(members);
+                } else {
+                    console.error('获取成员列表失败:', result);
+                }
+            } catch (error) {
+                console.error('获取成员列表时出错:', error);
+            }
+        };
+        
+        // 转义HTML特殊字符
+        const escapeHtml = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+        
+        // 响应式更新消息显示
+        Vue.watchEffect(() => {
+            if (state.messages.length > 0) {
+                updateMessagesDisplay();
+            }
+        });
+        
+        return {
+            state,
+            joinGroup,
+            sendMessage
+        };
+    }
+}).mount('#app');
+    </script>
+</body>
+</html>
